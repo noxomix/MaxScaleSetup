@@ -1,0 +1,34 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  maxscale:
+    image: mariadb/maxscale:latest
+    container_name: maxscale
+    restart: unless-stopped
+    ports:
+      - "10.13.3.2:4006:4006"  # Read/Write Split Port
+      - "10.13.3.2:4008:4008"  # Read-Only Port
+      - "10.13.3.2:8989:8989"  # REST API/Web Interface
+      - "10.13.3.2:3306:3306"  # Optional: MySQL-kompatibler Port
+    volumes:
+      # Host-Verzeichnis mit Config wird in Container gemountet
+      - /opt/maxscale_config/maxscale.cnf:/etc/maxscale.cnf:ro
+      # Persistent data volumes
+      - maxscale-data:/var/lib/maxscale
+      - maxscale-logs:/var/log/maxscale
+    environment:
+      - MAXSCALE_USER=admin
+      - MAXSCALE_PASSWORD=maxscale_admin
+    healthcheck:
+      test: ["CMD", "maxctrl", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  maxscale-data:
+    driver: local
+  maxscale-logs:
+    driver: local
