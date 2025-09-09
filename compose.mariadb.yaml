@@ -1,0 +1,32 @@
+services:
+  mariadb:
+    image: mariadb:10.11  # LTS Version (Long Term Support bis 2028)
+    container_name: mariadb-server
+    restart: unless-stopped
+    ports:
+      - "${BIND_IP:-10.13.3.2}:3306:3306"
+    environment:
+      # Root Passwort (PFLICHT bei erstem Start)
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-12345678}
+      # Datenbank die beim ersten Start erstellt wird (optional)
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-stalwart}
+
+      # Weitere offizielle Environment Variablen
+      MARIADB_ROOT_HOST: ${MARIADB_ROOT_HOST:-%}  # Von wo root sich verbinden darf (% = überall)
+      MARIADB_AUTO_UPGRADE: ${MARIADB_AUTO_UPGRADE:-1}  # Auto-upgrade bei Version-Updates
+      # Character Set und Collation
+      MARIADB_CHARACTER_SET: ${MARIADB_CHARACTER_SET:-utf8mb4}
+      MARIADB_COLLATE: ${MARIADB_COLLATE:-utf8mb4_unicode_ci}
+    volumes:
+      # Daten-Verzeichnis
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  mariadb-data:
+    driver: local
